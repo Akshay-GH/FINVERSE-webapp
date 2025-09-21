@@ -15,12 +15,15 @@ app.use(
   })
 );
 app.use(express.json());
+
+// API routes MUST come before static files and catch-all
 app.use("/api/v1", rootRouter);
 
+// Static files for frontend
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-// Catch-all handler for SPA routing
-app.use((req, res) => {
+// Catch-all handler for SPA routing - only for non-API routes
+app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
 });
 
