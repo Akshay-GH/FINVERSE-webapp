@@ -8,12 +8,7 @@ import path from "path";
 const __dirname = path.resolve();
 
 // Configure CORS for production
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
-  })
-);
+app.use(cors()); // Allow all origins - simpler for deployment
 app.use(express.json());
 
 // API routes MUST come before static files and catch-all
