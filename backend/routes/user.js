@@ -1,100 +1,139 @@
 import express from "express";
 import { User, Account } from "../db/dbSchema.js";
-import {
-  userSchema,
-  loginUserSchema,
-} from "../zodSchema.js";
+import { userSchema, loginUserSchema } from "../zodSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 const SECRET_KEY = process.env.SECRET_KEY;
 import { authMiddleware } from "../gate/middleware.js";
 
 const userRouter = express.Router();
 
-userRouter.post("/signup", async (req, res) => {
-  // Logic for user signup
-  //user inputs
-  const result = userSchema.safeParse(req.body);
-  if (!result.success) {
-    return res
-      .status(400)
-      .json({ message: "enter valid inputs ", error: result.error.errors });
-  }
-  const { username, password, firstName, lastName } = result.data;
-
-  //puting data in db
-  //checking user is already exist or not
-  const existingUser = await User.findOne({ username });
-  if (existingUser) {
-    return res.status(400).json({ error: "User already exists" });
-  }
-
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Create new user
-
-
-  try {
-      let newUser = await User.create({
-      username,
-      password: hashedPassword,
-      firstName,
-      lastName,
-    });
-
-   await Account.create({
-       userId:newUser._id,
-       balance:Math.floor(Math.random()*10000)  // initial balance between 0 to 10000 rs
-   });
-
-   await newUser.save();
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ error: "error while saving user to db", message: err.message });
-  }
-
- 
-  res.status(201).json({ message: "User created successfully"});
+// Test endpoint to verify routing works
+userRouter.get("/test", (req, res) => {
+  res.json({
+    message: "User router is working!",
+    timestamp: new Date().toISOString(),
+  });
 });
 
+userRouter.post("/signup", async (req, res) => {
+  console.log("=== SIGNUP ROUTE HIT ===");
+  console.log("Request body:", req.body);
+  console.log("Request headers:", req.headers);
 
+  try {
+    // Logic for user signup
+    //user inputs
+    const result = userSchema.safeParse(req.body);
+    console.log("Zod validation result:", result);
+
+    if (!result.success) {
+      console.log("Validation failed:", result.error);
+      return res
+        .status(400)
+        .json({ message: "enter valid inputs ", error: result.error.errors });
+    }
+    const { username, password, firstName, lastName } = result.data;
+
+    //puting data in db
+    //checking user is already exist or not
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+
+    try {
+      let newUser = await User.create({
+        username,
+        password: hashedPassword,
+        firstName,
+        lastName,
+      });
+
+      await Account.create({
+        userId: newUser._id,
+        balance: Math.floor(Math.random() * 10000), // initial balance between 0 to 10000 rs
+      });
+
+      await newUser.save();
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ error: "error while saving user to db", message: err.message });
+    }
+
+    res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    console.log("Signup error:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
+  }
+});
 
 userRouter.post("/login", async (req, res) => {
-  // Logic for user login
-  const result = loginUserSchema.safeParse(req.body);
-  if (!result.success) {
-    return res
-      .status(400)
-      .json({ message: "enter valid inputs ", error: result.error.errors });
-  }
-  const user = await User.findOne({ username: result.data.username });
-  if (!user) {
-    return res.status(400).json({ error: "Invalid username or password" });
-  }
+  console.log("=== LOGIN ROUTE HIT ===");
+  console.log("Request body:", req.body);
+  console.log("Request headers:", req.headers);
 
-  const isPasswordValid = await bcrypt.compare(
-    result.data.password,
-    user.password
-  );
-  if (!isPasswordValid) {
-    return res.status(400).json({ error: "Invalid username or password" });
-  }
+  try {
+    // Logic for user login
+    const result = loginUserSchema.safeParse(req.body);
+    console.log("Login validation result:", result);
 
-  if (user) {
-    const token = jwt.sign({ userId: user._id ,firstName:user.firstName,lastName:user.lastName}, SECRET_KEY, {
-      expiresIn: "1h",
+    if (!result.success) {
+      console.log("Login validation failed:", result.error);
+      return res
+        .status(400)
+        .json({ message: "enter valid inputs ", error: result.error.errors });
+    }
+    const user = await User.findOne({ username: result.data.username });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid username or password" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      result.data.password,
+      user.password
+    );
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: "Invalid username or password" });
+    }
+
+    if (user) {
+      const token = jwt.sign(
+        {
+          userId: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+        SECRET_KEY,
+        {
+          expiresIn: "1h",
+        }
+      );
+      res
+        .status(200)
+        .json({ message: "Login successful", token: "Bearer " + token });
+      return;
+    }
+
+    res.status(411).json({
+      message: "Error while logging in",
     });
-    res.status(200).json({ message: "Login successful", token: "Bearer " + token });
-    return;
+  } catch (error) {
+    console.log("Login error:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
   }
-
-  res.status(411).json({
-    message: "Error while logging in",
-  });
 });
 
 userRouter.put("/", authMiddleware, async (req, res) => {
@@ -124,23 +163,25 @@ userRouter.put("/", authMiddleware, async (req, res) => {
   }
 });
 
-
 userRouter.get("/bulk", authMiddleware, async (req, res) => {
   const filter = req.query.filter || "";
 
   try {
-    const users = await User.find({ $or: [
-      { firstName: { $regex: filter, $options: "i" } },
-      { lastName: { $regex: filter, $options: "i" } }
-      
-    ]});
-    res.status(200).json(users.map(user=>{
+    const users = await User.find({
+      $or: [
+        { firstName: { $regex: filter, $options: "i" } },
+        { lastName: { $regex: filter, $options: "i" } },
+      ],
+    });
+    res.status(200).json(
+      users.map((user) => {
         return {
-            firstName:user.firstName,
-            lastName:user.lastName,
-            userId:user._id
-        }
-    }));
+          firstName: user.firstName,
+          lastName: user.lastName,
+          userId: user._id,
+        };
+      })
+    );
   } catch (error) {
     res
       .status(500)
