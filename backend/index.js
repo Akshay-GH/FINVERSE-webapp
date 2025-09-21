@@ -23,7 +23,12 @@ app.use("/api/v1", rootRouter);
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
 // Catch-all handler for SPA routing - only for non-API routes
-app.get("*", (req, res) => {
+app.use((req, res, next) => {
+  // If it's an API route, skip this handler
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+  // For all other routes, serve the React app
   res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
 });
 
