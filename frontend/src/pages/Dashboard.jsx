@@ -34,7 +34,7 @@ export function Dashboard() {
 
   // Fetch balance
   useEffect(() => {
-    fetch("http://localhost:3000/api/v1/accounts/balance", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/accounts/balance`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -48,7 +48,7 @@ export function Dashboard() {
 
   // Fetch users
   useEffect(() => {
-    fetch(`http://localhost:3000/api/v1/users/bulk/?filter=${filter}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/users/bulk/?filter=${filter}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

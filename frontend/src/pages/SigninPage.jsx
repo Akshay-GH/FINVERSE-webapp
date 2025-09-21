@@ -26,7 +26,7 @@ export function SigninPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/v1/users/login",
+        `${import.meta.env.VITE_API_URL}/api/v1/users/login`,
         {
           method: "POST",
           body: JSON.stringify(formData),

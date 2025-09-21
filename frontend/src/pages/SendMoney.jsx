@@ -17,7 +17,7 @@ export function SendMoney() {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/v1/accounts/transfer",
+        `${import.meta.env.VITE_API_URL}/api/v1/accounts/transfer`,
         {
           method: "POST",
           body: JSON.stringify({ to, amount: Number(amount) }),

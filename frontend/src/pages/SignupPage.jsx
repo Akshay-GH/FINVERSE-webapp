@@ -31,7 +31,7 @@ export function SignupPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/v1/users/signup",
+        `${import.meta.env.VITE_API_URL}/api/v1/users/signup`,
         {
           method: "POST",
           body: JSON.stringify(formData),
