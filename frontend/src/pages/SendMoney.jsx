@@ -17,7 +17,7 @@ export function SendMoney() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/accounts/transfer`,
+        `https://finverse-webapp.onrender.com/api/v1/accounts/transfer`,
         {
           method: "POST",
           body: JSON.stringify({ to, amount: Number(amount) }),

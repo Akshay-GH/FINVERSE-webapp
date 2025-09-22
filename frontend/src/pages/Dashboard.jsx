@@ -1,6 +1,4 @@
 
-
-
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -34,7 +32,7 @@ export function Dashboard() {
 
   // Fetch balance
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/v1/accounts/balance`, {
+    fetch(`https://finverse-webapp.onrender.com/api/v1/accounts/balance`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -48,7 +46,7 @@ export function Dashboard() {
 
   // Fetch users
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/v1/users/bulk/?filter=${filter}`, {
+    fetch(`https://finverse-webapp.onrender.com/api/v1/users/bulk/?filter=${filter}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

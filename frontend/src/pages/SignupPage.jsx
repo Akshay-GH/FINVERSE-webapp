@@ -31,7 +31,7 @@ export function SignupPage() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/users/signup`,
+        `https://finverse-webapp.onrender.com/api/v1/users/signup`,
         {
           method: "POST",
           body: JSON.stringify(formData),
