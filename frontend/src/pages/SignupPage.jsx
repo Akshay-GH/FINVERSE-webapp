@@ -4,8 +4,8 @@ import { Lodder } from "../Components/Lodder";
 import { TopNav } from "../Components/TopNav";
 
 export function SignupPage() {
-  // const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
-  const API_BASE = "http://localhost:3000/api/v1";
+  const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
+  // const API_BASE = "http://localhost:3000/api/v1";
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [errorBody, setErrorBody] = useState("");

@@ -4,7 +4,8 @@ import { TopNav } from "../Components/TopNav";
 import { Lodder } from "../Components/Lodder";
 
 export function ResetPassword() {
-  const API_BASE = "http://localhost:3000/api/v1";
+  const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
+  // const API_BASE = "http://localhost:3000/api/v1";
   const location = useLocation();
   const navigate = useNavigate();
   const initialEmail = useMemo(() => {

@@ -4,8 +4,8 @@ import PaymentSuccessPopup from "../Components/PaymentSuccessful";
 import { Lodder } from "../Components/Lodder";
 
 export function SendMoney() {
-  // const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
-  const API_BASE = "http://localhost:3000/api/v1";
+  const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
+  // const API_BASE = "http://localhost:3000/api/v1";
   const [amount, setAmount] = useState(0);
   const { to, name } = useParams();
   const [showpopUp, setPopUp] = useState(false);
