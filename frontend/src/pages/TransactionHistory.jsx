@@ -17,7 +17,8 @@ const STATUS_LABELS = {
 };
 
 export function TransactionHistory() {
-  const API_BASE = "http://localhost:3000/api/v1";
+  const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
+  // const API_BASE = "http://localhost:3000/api/v1";
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 

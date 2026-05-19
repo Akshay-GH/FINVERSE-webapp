@@ -6,8 +6,8 @@ import { UserComponent } from "../Components/UserComponent";
 import { Lodder } from "../Components/Lodder";
 
 export function Dashboard() {
-  // const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
-  const API_BASE = "http://localhost:3000/api/v1";
+  const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
+  // const API_BASE = "http://localhost:3000/api/v1";
   const [balance, setBalance] = useState(0);
   const [filter, setFilter] = useState("");
   const [users, setUsers] = useState([]);

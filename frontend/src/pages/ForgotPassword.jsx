@@ -4,7 +4,8 @@ import { TopNav } from "../Components/TopNav";
 import { Lodder } from "../Components/Lodder";
 
 export function ForgotPassword() {
-  const API_BASE = "http://localhost:3000/api/v1";
+  const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
+  // const API_BASE = "http://localhost:3000/api/v1";
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
