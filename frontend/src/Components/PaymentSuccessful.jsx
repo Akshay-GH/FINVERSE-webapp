@@ -4,24 +4,27 @@ import { CheckCircle } from "lucide-react";
 export default function PaymentSuccessPopup({ amount, onClose }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-      <div className="bg-white rounded-2xl shadow-lg p-8 text-center relative w-[320px] animate-fadeIn">
-        
+      <div className="surface-card relative w-[340px] p-8 text-center">
         {/* Success Icon */}
         <div className="flex justify-center mb-4">
           <div className="relative">
-            <CheckCircle className="text-green-500 w-16 h-16" />
-            <div className="absolute inset-0 animate-ping rounded-full bg-green-400 opacity-30"></div>
+            <CheckCircle className="h-16 w-16 text-[var(--brand-primary)]" />
+            <div className="absolute inset-0 pulse-ring rounded-full bg-[var(--brand-primary)]/30"></div>
           </div>
         </div>
 
         {/* Message */}
-        <h2 className="text-xl font-semibold text-gray-800">Payment Successful!</h2>
-        <p className="text-gray-600 mt-2">₹{amount} Paid Successfully</p>
+        <h2 className="text-xl font-semibold text-[var(--brand-deep)]">
+          Payment successful
+        </h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Rs {amount} sent to recipient
+        </p>
 
         {/* Close button */}
         <button
           onClick={onClose}
-          className="mt-6 w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl transition"
+          className="btn-primary mt-6 w-full px-4 py-2 text-sm font-semibold"
         >
           Done
         </button>

@@ -1,14 +1,30 @@
 import express from "express";
 import { User, Account } from "../db/dbSchema.js";
-import { userSchema, loginUserSchema } from "../zodSchema.js";
+import {
+  userSchema,
+  loginUserSchema,
+  forgotPasswordSchema,
+  verifyOtpSchema,
+  resetPasswordSchema,
+} from "../zodSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
 const SECRET_KEY = process.env.SECRET_KEY;
 import { authMiddleware } from "../gate/middleware.js";
+import { sendResetOtpEmail } from "../utils/email.js";
 
 const userRouter = express.Router();
+
+const OTP_EXPIRY_MS = 10 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 10;
+const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
+
+function generateOtp() {
+  return crypto.randomInt(100000, 1000000).toString();
+}
 
 // Test endpoint to verify routing works
 userRouter.get("/test", (req, res) => {
@@ -59,7 +75,7 @@ userRouter.post("/signup", async (req, res) => {
 
       await Account.create({
         userId: newUser._id,
-        balance: Math.floor(Math.random() * 10000), // initial balance between 0 to 10000 rs
+        balance: Math.floor(Math.random() * 1000000), // initial balance between 0 to 10000 rs
       });
 
       await newUser.save();
@@ -101,7 +117,7 @@ userRouter.post("/login", async (req, res) => {
 
     const isPasswordValid = await bcrypt.compare(
       result.data.password,
-      user.password
+      user.password,
     );
     if (!isPasswordValid) {
       return res.status(400).json({ error: "Invalid username or password" });
@@ -117,7 +133,7 @@ userRouter.post("/login", async (req, res) => {
         SECRET_KEY,
         {
           expiresIn: "1h",
-        }
+        },
       );
       res
         .status(200)
@@ -134,6 +150,137 @@ userRouter.post("/login", async (req, res) => {
       .status(500)
       .json({ error: "Internal server error", details: error.message });
   }
+});
+
+userRouter.post("/forgot-password", async (req, res) => {
+  const result = forgotPasswordSchema.safeParse(req.body);
+  if (!result.success) {
+    return res
+      .status(400)
+      .json({ message: "enter valid inputs", error: result.error.errors });
+  }
+
+  const { username } = result.data;
+  const user = await User.findOne({ username });
+
+  if (!user) {
+    return res.status(200).json({
+      message:
+        "If an account exists for this email, an OTP has been sent to reset your password.",
+    });
+  }
+
+  const now = Date.now();
+  if (
+    user.resetOtpLastSentAt &&
+    now - new Date(user.resetOtpLastSentAt).getTime() < OTP_RESEND_COOLDOWN_MS
+  ) {
+    return res.status(200).json({
+      message:
+        "If an account exists for this email, an OTP has been sent recently. Please wait before requesting another.",
+    });
+  }
+
+  const otp = generateOtp();
+  const otpHash = await bcrypt.hash(otp, 10);
+
+  user.resetOtpHash = otpHash;
+  user.resetOtpExpiresAt = new Date(now + OTP_EXPIRY_MS);
+  user.resetOtpAttempts = 0;
+  user.resetOtpLastSentAt = new Date(now);
+  await user.save();
+
+  try {
+    await sendResetOtpEmail({ to: username, otp });
+  } catch (error) {
+    console.error("OTP email error:", error);
+  }
+
+  return res.status(200).json({
+    message:
+      "If an account exists for this email, an OTP has been sent to reset your password.",
+  });
+});
+
+userRouter.post("/verify-otp", async (req, res) => {
+  const result = verifyOtpSchema.safeParse(req.body);
+  if (!result.success) {
+    return res
+      .status(400)
+      .json({ message: "enter valid inputs", error: result.error.errors });
+  }
+
+  const { username, otp } = result.data;
+  const user = await User.findOne({ username });
+
+  if (!user || !user.resetOtpHash || !user.resetOtpExpiresAt) {
+    return res.status(400).json({ error: "Invalid or expired OTP" });
+  }
+
+  if (user.resetOtpAttempts >= OTP_MAX_ATTEMPTS) {
+    return res.status(429).json({ error: "Too many attempts" });
+  }
+
+  if (Date.now() > new Date(user.resetOtpExpiresAt).getTime()) {
+    user.resetOtpHash = null;
+    user.resetOtpExpiresAt = null;
+    user.resetOtpAttempts = 0;
+    await user.save();
+    return res.status(400).json({ error: "Invalid or expired OTP" });
+  }
+
+  const isValid = await bcrypt.compare(otp, user.resetOtpHash);
+  if (!isValid) {
+    user.resetOtpAttempts += 1;
+    await user.save();
+    return res.status(400).json({ error: "Invalid or expired OTP" });
+  }
+
+  return res.status(200).json({ message: "OTP verified" });
+});
+
+userRouter.post("/reset-password", async (req, res) => {
+  const result = resetPasswordSchema.safeParse(req.body);
+  if (!result.success) {
+    return res
+      .status(400)
+      .json({ message: "enter valid inputs", error: result.error.errors });
+  }
+
+  const { username, otp, newPassword } = result.data;
+  const user = await User.findOne({ username });
+
+  if (!user || !user.resetOtpHash || !user.resetOtpExpiresAt) {
+    return res.status(400).json({ error: "Invalid or expired OTP" });
+  }
+
+  if (user.resetOtpAttempts >= OTP_MAX_ATTEMPTS) {
+    return res.status(429).json({ error: "Too many attempts" });
+  }
+
+  if (Date.now() > new Date(user.resetOtpExpiresAt).getTime()) {
+    user.resetOtpHash = null;
+    user.resetOtpExpiresAt = null;
+    user.resetOtpAttempts = 0;
+    await user.save();
+    return res.status(400).json({ error: "Invalid or expired OTP" });
+  }
+
+  const isValid = await bcrypt.compare(otp, user.resetOtpHash);
+  if (!isValid) {
+    user.resetOtpAttempts += 1;
+    await user.save();
+    return res.status(400).json({ error: "Invalid or expired OTP" });
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.resetOtpHash = null;
+  user.resetOtpExpiresAt = null;
+  user.resetOtpAttempts = 0;
+  user.resetOtpLastSentAt = null;
+  await user.save();
+
+  return res.status(200).json({ message: "Password reset successful" });
 });
 
 userRouter.put("/", authMiddleware, async (req, res) => {
@@ -180,7 +327,7 @@ userRouter.get("/bulk", authMiddleware, async (req, res) => {
           lastName: user.lastName,
           userId: user._id,
         };
-      })
+      }),
     );
   } catch (error) {
     res
