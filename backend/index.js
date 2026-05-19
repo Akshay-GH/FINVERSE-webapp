@@ -3,6 +3,7 @@ import express from "express";
 import rootRouter from "./routes/index.js";
 import cors from "cors";
 const app = express();
+import { User } from "./db/dbSchema.js";
 
 import path from "path";
 const __dirname = path.resolve();
@@ -30,4 +31,19 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (adminEmail) {
+    User.findOneAndUpdate(
+      { username: adminEmail.toLowerCase() },
+      { isAdmin: true },
+    )
+      .then((result) => {
+        if (!result) {
+          console.warn("Admin email not found. Create the user first.");
+        }
+      })
+      .catch((error) => {
+        console.error("Admin seed error:", error);
+      });
+  }
 });

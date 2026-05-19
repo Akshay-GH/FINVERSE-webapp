@@ -5,11 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-  
     "dev": "nodemon backend/index.js",
-    "build":"npm install && npm install --prefix frontend && npm run build --prefix frontend",
-     "start": "node backend/index.js"
-
+    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "node backend/index.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +19,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.1",
+    "nodemailer": "^6.10.1",
     "nodemon": "^3.1.10",
     "zod": "^4.1.8"
   }
