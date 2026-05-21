@@ -6,6 +6,7 @@ import {
   forgotPasswordSchema,
   verifyOtpSchema,
   resetPasswordSchema,
+  userBulkQuerySchema,
 } from "../zodSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -309,24 +310,44 @@ userRouter.put("/", authMiddleware, async (req, res) => {
 });
 
 userRouter.get("/bulk", authMiddleware, async (req, res) => {
-  const filter = req.query.filter || "";
+  const result = userBulkQuerySchema.safeParse(req.query);
+  if (!result.success) {
+    return res
+      .status(400)
+      .json({ message: "enter valid inputs", error: result.error.errors });
+  }
+
+  const filter = result.data.filter || "";
+  const page = result.data.page ?? 1;
+  const limit = result.data.limit ?? 10;
+  const skip = (page - 1) * limit;
 
   try {
-    const users = await User.find({
+    const query = {
+      _id: { $ne: req.userId },
       $or: [
         { firstName: { $regex: filter, $options: "i" } },
         { lastName: { $regex: filter, $options: "i" } },
       ],
+    };
+
+    const [total, users] = await Promise.all([
+      User.countDocuments(query),
+      User.find(query)
+        .sort({ firstName: 1, lastName: 1 })
+        .skip(skip)
+        .limit(limit),
+    ]);
+
+    const items = users.map((user) => {
+      return {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userId: user._id,
+      };
     });
-    res.status(200).json(
-      users.map((user) => {
-        return {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          userId: user._id,
-        };
-      }),
-    );
+
+    res.status(200).json({ items, total, page, limit });
   } catch (error) {
     res
       .status(500)
