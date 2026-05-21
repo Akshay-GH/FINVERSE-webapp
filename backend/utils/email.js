@@ -1,26 +1,35 @@
 import nodemailer from "nodemailer";
 
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER;
+// Brevo SMTP
+const BREVO_SMTP_HOST = process.env.BREVO_SMTP_HOST || "smtp-relay.brevo.com";
+const BREVO_SMTP_PORT = Number(process.env.BREVO_SMTP_PORT || 587);
+const BREVO_SMTP_USER = process.env.BREVO_SMTP_USER;
+const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY;
+const SENDER_EMAIL = process.env.SENDER_EMAIL;
+const SENDER_NAME = process.env.SENDER_NAME || "Finverse";
+const SMTP_FROM = SENDER_EMAIL ? `${SENDER_NAME} <${SENDER_EMAIL}>` : undefined;
 
 function assertSmtpConfig() {
-  if (!SMTP_USER || !SMTP_PASS) {
-    throw new Error("Missing SMTP_USER or SMTP_PASS configuration");
+  if (!BREVO_SMTP_USER || !BREVO_SMTP_KEY || !SENDER_EMAIL) {
+    throw new Error(
+      "Missing Brevo SMTP configuration (BREVO_SMTP_USER, BREVO_SMTP_KEY, SENDER_EMAIL)",
+    );
   }
 }
 
 function getTransporter() {
   return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_PORT === 465,
+    host: BREVO_SMTP_HOST,
+    port: BREVO_SMTP_PORT,
+    secure: BREVO_SMTP_PORT === 465,
+    requireTLS: BREVO_SMTP_PORT !== 465,
     auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
+      user: BREVO_SMTP_USER,
+      pass: BREVO_SMTP_KEY,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
   });
 }
 

@@ -190,11 +190,9 @@ userRouter.post("/forgot-password", async (req, res) => {
   user.resetOtpLastSentAt = new Date(now);
   await user.save();
 
-  try {
-    await sendResetOtpEmail({ to: username, otp });
-  } catch (error) {
+  sendResetOtpEmail({ to: username, otp }).catch((error) => {
     console.error("OTP email error:", error);
-  }
+  });
 
   return res.status(200).json({
     message:
