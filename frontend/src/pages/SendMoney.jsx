@@ -5,7 +5,7 @@ import { Lodder } from "../Components/Lodder";
 
 export function SendMoney() {
   const API_BASE = "https://finverse-webapp.onrender.com/api/v1";
-  // const API_BASE = "http://localhost:3000/api/v1";
+//   const API_BASE = "http://localhost:3000/api/v1";
   const [amount, setAmount] = useState(0);
   const { to, name } = useParams();
   const [showpopUp, setPopUp] = useState(false);
@@ -37,7 +37,6 @@ export function SendMoney() {
   };
 
   const handleTransfer = async () => {
-    // Validate amount
     if (!amount || Number(amount) <= 0) {
       setError("Enter an amount greater than Rs 0.");
       return;
@@ -73,7 +72,7 @@ export function SendMoney() {
       }
 
       document.getElementById("amount").value = "";
-      setPopUp(() => true);
+      setPopUp(true);
     } catch (error) {
       console.error("Transfer error:", error);
       setError("Network error. Please try again.");
@@ -112,7 +111,7 @@ export function SendMoney() {
       setOtpRequired(false);
       setOtp("");
       document.getElementById("amount").value = "";
-      setPopUp(() => true);
+      setPopUp(true);
     } catch (error) {
       console.error("OTP verification error:", error);
       setError("Network error. Please try again.");
@@ -159,16 +158,25 @@ export function SendMoney() {
     <div className="min-h-screen bg-[var(--brand-surface)]">
       <div className="mx-auto flex w-full max-w-4xl flex-col items-center px-6 py-12">
         <div className="surface-card w-full max-w-xl p-8">
-          <div className="space-y-2 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Transfer
-            </p>
-            <h1 className="text-2xl font-semibold text-[var(--brand-deep)]">
-              Send money
-            </h1>
-            <p className="text-sm text-[var(--text-muted)]">
-              Confirm recipient and enter the amount.
-            </p>
+          <div className="space-y-3">
+            <button
+              className="btn-secondary px-4 py-2 text-xs font-semibold"
+              type="button"
+              onClick={() => navigate("/dashboard")}
+            >
+              Back to dashboard
+            </button>
+            <div className="space-y-2 text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Transfer
+              </p>
+              <h1 className="text-2xl font-semibold text-[var(--brand-deep)]">
+                Send money
+              </h1>
+              <p className="text-sm text-[var(--text-muted)]">
+                Confirm recipient and enter the amount.
+              </p>
+            </div>
           </div>
 
           <div className="mt-8 space-y-6">
@@ -264,10 +272,8 @@ export function SendMoney() {
       {showpopUp && (
         <PaymentSuccessPopup
           amount={amount}
-          onClose={() => {
-            setPopUp(false);
-            navigate("/dashboard");
-          }}
+          onClose={() => setPopUp(false)}
+          onBack={() => navigate("/dashboard")}
         />
       )}
     </div>

@@ -1,7 +1,7 @@
 // PaymentSuccessPopup.jsx
 import { CheckCircle } from "lucide-react";
 
-export default function PaymentSuccessPopup({ amount, onClose }) {
+export default function PaymentSuccessPopup({ amount, onClose, onBack }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
       <div className="surface-card relative w-[340px] p-8 text-center">
@@ -21,13 +21,22 @@ export default function PaymentSuccessPopup({ amount, onClose }) {
           Rs {amount} sent to recipient
         </p>
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="btn-primary mt-6 w-full px-4 py-2 text-sm font-semibold"
-        >
-          Done
-        </button>
+        {/* Actions */}
+        <div className="mt-6 space-y-3">
+          <button
+            onClick={onClose}
+            className="btn-primary w-full px-4 py-2 text-sm font-semibold"
+          >
+            Done
+          </button>
+          <button
+            onClick={onBack}
+            className="btn-secondary w-full px-4 py-2 text-sm font-semibold"
+            type="button"
+          >
+            Back to dashboard
+          </button>
+        </div>
       </div>
     </div>
   );

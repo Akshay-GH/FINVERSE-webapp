@@ -11,6 +11,9 @@ export function Dashboard() {
   const [balance, setBalance] = useState(0);
   const [filter, setFilter] = useState("");
   const [users, setUsers] = useState([]);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
   const [balanceLoading, setBalanceLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -19,14 +22,20 @@ export function Dashboard() {
 
   const token = localStorage.getItem("token")?.split(" ")[1];
 
-  const fullName = useMemo(() => {
-    if (!token) return "";
+  const { fullName, currentUserId } = useMemo(() => {
+    if (!token) {
+      return { fullName: "", currentUserId: "" };
+    }
+
     try {
-      const { firstName, lastName } = jwtDecode(token);
-      return `${firstName} ${lastName}`;
+      const { firstName, lastName, userId } = jwtDecode(token);
+      return {
+        fullName: `${firstName} ${lastName}`.trim(),
+        currentUserId: userId ? String(userId) : "",
+      };
     } catch (e) {
       console.error("Invalid token:", e);
-      return "";
+      return { fullName: "", currentUserId: "" };
     }
   }, [token]);
 
@@ -74,7 +83,13 @@ export function Dashboard() {
       setUsersLoading(true);
       setError("");
       try {
-        const res = await fetch(`${API_BASE}/users/bulk/?filter=${filter}`, {
+        const params = new URLSearchParams({
+          filter,
+          page: String(page),
+          limit: String(limit),
+        });
+
+        const res = await fetch(`${API_BASE}/users/bulk?${params.toString()}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -85,7 +100,9 @@ export function Dashboard() {
           throw new Error("Unable to load users right now.");
         }
         const data = await res.json();
-        setUsers(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data.items) ? data.items : [];
+        setUsers(list);
+        setTotal(data.total ?? 0);
       } catch (err) {
         setError(err.message || "Users fetch failed.");
       } finally {
@@ -93,7 +110,15 @@ export function Dashboard() {
       }
     };
     loadUsers();
+  }, [filter, page, limit, currentUserId]);
+
+  useEffect(() => {
+    setPage(1);
   }, [filter]);
+
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(total / limit));
+  }, [total, limit]);
 
   return (
     <div className="min-h-screen bg-[var(--brand-surface)]">
@@ -213,6 +238,30 @@ export function Dashboard() {
                 />
               ))
             )}
+          </div>
+
+          <div className="mt-6 flex flex-col items-center justify-between gap-3 text-sm text-slate-600 md:flex-row">
+            <p>
+              Page {page} of {totalPages} • {total} total
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                className="btn-secondary px-4 py-2 text-xs font-semibold disabled:opacity-60"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page <= 1 || usersLoading}
+              >
+                Previous
+              </button>
+              <button
+                className="btn-primary px-4 py-2 text-xs font-semibold disabled:opacity-60"
+                onClick={() =>
+                  setPage((prev) => Math.min(totalPages, prev + 1))
+                }
+                disabled={page >= totalPages || usersLoading}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </section>
       </main>

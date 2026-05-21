@@ -108,6 +108,10 @@ router.post("/transfer", authMiddleware, async (req, res) => {
       ? new mongoose.Types.ObjectId(to)
       : to;
 
+    if (String(recipientUserId) === String(req.userId)) {
+      return res.status(400).json({ error: "Cannot transfer to yourself" });
+    }
+
     const toAccount = await Account.findOne({
       userId: recipientUserId,
     });

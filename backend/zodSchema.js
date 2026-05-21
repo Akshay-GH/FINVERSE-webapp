@@ -62,6 +62,12 @@ const transactionHistoryQuerySchema = zod.object({
   type: zod.enum(["credit", "debit"]).optional(),
 });
 
+const userBulkQuerySchema = zod.object({
+  filter: zod.string().optional(),
+  page: numberFromQuery(1, 100),
+  limit: numberFromQuery(1, 50),
+});
+
 export {
   userSchema,
   loginUserSchema,
@@ -73,4 +79,5 @@ export {
   transferOtpResendSchema,
   fraudLogQuerySchema,
   transactionHistoryQuerySchema,
+  userBulkQuerySchema,
 };
