@@ -44,18 +44,23 @@ Create a .env file in the repository root with the following keys:
 ```bash
 MONGO_URL=mongodb+srv://<user>:<pass>@<cluster>/<db>
 SECRET_KEY=your_jwt_secret
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_USER=your_email@example.com
-SMTP_PASS=your_email_password_or_app_password
-SMTP_FROM=Finverse <no-reply@example.com>
+
+# Brevo SMTP
+BREVO_SMTP_HOST=smtp-relay.brevo.com
+BREVO_SMTP_PORT=587
+BREVO_SMTP_USER=your_brevo_login
+BREVO_SMTP_KEY=your_brevo_smtp_key
+SENDER_EMAIL=no-reply@example.com
+SENDER_NAME=Finverse
+
+
 ADMIN_EMAIL=admin@example.com
 PORT=3000
 ```
 
 Notes:
 
-- SMTP\_\* variables are required for OTP emails.
+- Brevo variables are required for OTP emails.
 - ADMIN_EMAIL is optional and marks a pre-existing user as admin.
 - PORT is optional (defaults to 3000).
 
