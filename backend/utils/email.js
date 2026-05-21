@@ -1,68 +1,63 @@
-import nodemailer from "nodemailer";
-
-// Brevo SMTP
-const BREVO_SMTP_HOST = process.env.BREVO_SMTP_HOST || "smtp-relay.brevo.com";
-const BREVO_SMTP_PORT = Number(process.env.BREVO_SMTP_PORT || 587);
-const BREVO_SMTP_USER = process.env.BREVO_SMTP_USER;
-const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY;
+// Brevo Transactional Email API (HTTP)
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const SENDER_EMAIL = process.env.SENDER_EMAIL;
 const SENDER_NAME = process.env.SENDER_NAME || "Finverse";
-const SMTP_FROM = SENDER_EMAIL ? `${SENDER_NAME} <${SENDER_EMAIL}>` : undefined;
 
-function assertSmtpConfig() {
-  if (!BREVO_SMTP_USER || !BREVO_SMTP_KEY || !SENDER_EMAIL) {
+function assertBrevoConfig() {
+  if (!BREVO_API_KEY || !SENDER_EMAIL) {
     throw new Error(
-      "Missing Brevo SMTP configuration (BREVO_SMTP_USER, BREVO_SMTP_KEY, SENDER_EMAIL)",
+      "Missing Brevo API configuration (BREVO_API_KEY, SENDER_EMAIL)",
     );
   }
 }
 
-function getTransporter() {
-  return nodemailer.createTransport({
-    host: BREVO_SMTP_HOST,
-    port: BREVO_SMTP_PORT,
-    secure: BREVO_SMTP_PORT === 465,
-    requireTLS: BREVO_SMTP_PORT !== 465,
-    auth: {
-      user: BREVO_SMTP_USER,
-      pass: BREVO_SMTP_KEY,
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 20000,
-  });
+async function sendBrevoEmail({ to, subject, text }) {
+  assertBrevoConfig();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+        to: [{ email: to }],
+        subject,
+        textContent: text,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Brevo API error: ${response.status} ${response.statusText} ${errorBody}`,
+      );
+    }
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function sendResetOtpEmail({ to, otp, appName = "Finverse" }) {
-  assertSmtpConfig();
-  const transporter = getTransporter();
-
   const subject = `${appName} password reset OTP`;
   const text =
     `Your ${appName} password reset OTP is ${otp}.\n` +
     "It expires in 10 minutes. If you did not request this, ignore this email.";
 
-  await transporter.sendMail({
-    from: SMTP_FROM,
-    to,
-    subject,
-    text,
-  });
+  await sendBrevoEmail({ to, subject, text });
 }
 
 export async function sendTransferOtpEmail({ to, otp, appName = "Finverse" }) {
-  assertSmtpConfig();
-  const transporter = getTransporter();
-
   const subject = `${appName} transfer verification OTP`;
   const text =
     `Your ${appName} transfer OTP is ${otp}.\n` +
     "It expires in 10 minutes. If you did not request this, contact support.";
 
-  await transporter.sendMail({
-    from: SMTP_FROM,
-    to,
-    subject,
-    text,
-  });
+  await sendBrevoEmail({ to, subject, text });
 }
